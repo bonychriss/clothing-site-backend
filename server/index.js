@@ -87,8 +87,10 @@ app.use(express.static(path.join(__dirname, '../client/build')));
 // Serve images from React public folder
 app.use('/images', express.static(path.join(__dirname, '../client/public/images')));
 
-// Catch-all route to serve React index.html for frontend routes
+
+// Catch-all route: serve React index.html for non-API routes
 app.get('*', (req, res) => {
+  if (req.path.startsWith('/api')) return res.status(404).send('API route not found');
   res.sendFile(path.join(__dirname, '../client/build', 'index.html'));
 });
 
