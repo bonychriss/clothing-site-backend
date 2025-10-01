@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { fetchFromApi as apiFetch } from '../utils/api';
 
 export default function AdminDashboard() {
   const [orders, setOrders] = useState([]);
@@ -12,11 +13,8 @@ export default function AdminDashboard() {
       setError('');
       try {
         const token = localStorage.getItem('token');
-        const res = await fetch('/api/orders', {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const data = await res.json();
-        setOrders(Array.isArray(data) ? data : []);
+        const ordersData = await apiFetch('/api/orders', { headers: { 'Authorization': `Bearer ${token}` } });
+        setOrders(Array.isArray(ordersData) ? ordersData : []);
       } catch (err) {
         setError('Failed to fetch orders');
       } finally {
@@ -30,13 +28,11 @@ export default function AdminDashboard() {
     setConfirming(orderId);
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch(`/api/orders/${orderId}/confirm`, {
+      await apiFetch(`/api/orders/${orderId}/confirm`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` }
       });
-      if (res.ok) {
-        setOrders(orders => orders.map(o => o._id === orderId ? { ...o, status: 'confirmed' } : o));
-      }
+      setOrders(orders => orders.map(o => o._id === orderId ? { ...o, status: 'confirmed' } : o));
     } catch {
       alert('Failed to confirm order');
     } finally {

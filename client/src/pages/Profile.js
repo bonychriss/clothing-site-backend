@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { fetchFromApi as apiFetch } from '../utils/api';
 
 // Logout logic
 const handleLogout = () => {
@@ -58,15 +59,14 @@ function Profile() {
     const formData = new FormData();
     formData.append('photo', profilePhoto);
     try {
-      const res = await fetch('/api/auth/upload-photo', {
+      const data = await apiFetch('/api/auth/upload-photo', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
         },
         body: formData
       });
-      const data = await res.json();
-      if (res.ok && data.avatarUrl) {
+      if (data.avatarUrl) {
         setUser(u => ({ ...u, avatarUrl: data.avatarUrl }));
         setProfilePhoto(null);
         setPhotoPreview(null);
@@ -82,12 +82,8 @@ function Profile() {
   useEffect(() => {
     const token = localStorage.getItem('token');
     Promise.all([
-      fetch('/api/auth/me', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      }).then(res => res.json()),
-      fetch('/api/orders/my', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      }).then(res => res.json())
+      apiFetch('/api/auth/me', { headers: { 'Authorization': `Bearer ${token}` } }),
+      apiFetch('/api/orders/my', { headers: { 'Authorization': `Bearer ${token}` } })
     ])
       .then(([userData, ordersData]) => {
         setUser(userData);
@@ -105,19 +101,18 @@ function Profile() {
     e.preventDefault();
     setPasswordMsg('');
     const token = localStorage.getItem('token');
-    const res = await fetch('/api/auth/change-password', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify(passwordForm)
-    });
-    const data = await res.json();
-    if (res.ok) {
+    try {
+      const data = await apiFetch('/api/auth/change-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(passwordForm)
+      });
       setPasswordMsg('Password changed successfully.');
       setPasswordForm({ oldPassword: '', newPassword: '' });
-    } else {
+    } catch (err) {
       setPasswordMsg(data.message || 'Failed to change password.');
     }
   };

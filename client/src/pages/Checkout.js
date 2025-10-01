@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';import { apiFetch } from '../utils/api';
+import { useNavigate } from 'react-router-dom';
+import { fetchFromApi as apiFetch } from '../utils/api';
 
 export default function Checkout() {
   // ...existing code...
@@ -86,7 +87,6 @@ export default function Checkout() {
       if (!token) {
         throw new Error('You must be logged in to place an order.');
       }
-      const response = await fetch('/api/orders', {
       const result = await apiFetch('/api/orders', {
         method: 'POST',
         headers: {
@@ -95,21 +95,6 @@ export default function Checkout() {
         },
         body: JSON.stringify(orderData),
       });
-      console.log('Response status:', response.status);
-      console.log('Response headers:', response.headers);
-      const responseText = await response.text();
-      console.log('Response text:', responseText);
-      let result;
-      try {
-        result = JSON.parse(responseText);
-      } catch (e) {
-        console.error('Failed to parse JSON response:', e);
-        throw new Error(`Invalid JSON response: ${responseText}`);
-      }
-      if (!response.ok) {
-        console.error('Backend error details:', result);
-        throw new Error(result.message || `HTTP error! status: ${response.status}`);
-      }
       console.log('Order successful:', result);
       return result;
     } catch (error) {

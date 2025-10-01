@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { fetchFromApi as apiFetch } from '../utils/api';
 
 function Register() {
   // Country code mapping
@@ -38,13 +39,11 @@ function Register() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch('/api/auth/register', {
+      const data = await apiFetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, email, password, phone, country })
       });
-      if (!res.ok) throw new Error('Registration failed');
-      const data = await res.json();
       if (data.token) {
         localStorage.setItem('token', data.token);
       }
