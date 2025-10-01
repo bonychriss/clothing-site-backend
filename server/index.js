@@ -78,16 +78,16 @@ app.use('/api/best-picks', require('./routes/bestPicks'));
 const path = require('path');
 
 // Serve static React files
-app.use(express.static(path.join(__dirname, '../client/build')));
+app.use(express.static(path.join(__dirname, 'client/build')));
 
 // Serve images from React public folder
-app.use('/images', express.static(path.join(__dirname, '../client/public/images')));
+app.use('/images', express.static(path.join(__dirname, 'client/public/images')));
 
 
 // Catch-all route: serve React index.html for non-API routes
 app.get('*', (req, res) => {
   if (req.path.startsWith('/api')) return res.status(404).send('API route not found');
-  res.sendFile(path.join(__dirname, '../client/build', 'index.html'));
+  res.sendFile(path.join(__dirname, 'client/build', 'index.html'));
 });
 
 const PORT = process.env.PORT || 5000;
