@@ -19,14 +19,7 @@ export default function Home() {
 
   // Simple utility helpers
   const fmt = (s) => String(s || '').trim();
-  const preloadImage = (src) => {
-    if (!src) return;
-    const link = document.createElement('link');
-    link.rel = 'preload';
-    link.as = 'image';
-    link.href = src;
-    document.head.appendChild(link);
-  };
+
 
   // SEO basics
   useEffect(() => {
@@ -48,21 +41,10 @@ export default function Home() {
     'https://images.unsplash.com/photo-1465101046530-73398c7f28ca?auto=format&fit=crop&w=1600&q=80',
   ], []);
   const [heroIdx, setHeroIdx] = useState(0);
-  useEffect(() => {
-    // Preload all hero images on mount
-    heroImages.forEach(preloadImage);
-  }, [heroImages]);
+
 
   // Preload the first hero image for faster LCP
-  useEffect(() => {
-    if (heroImages.length > 0) {
-      const link = document.createElement('link');
-      link.rel = 'preload';
-      link.as = 'image';
-      link.href = heroImages[0];
-      document.head.appendChild(link);
-    }
-  }, [heroImages]);
+
 
   useEffect(() => {
     const timer = setInterval(() => setHeroIdx((i) => (i + 1) % heroImages.length), 5000);
@@ -292,7 +274,7 @@ export default function Home() {
           autoPlay
           muted
           loop
-          preload="metadata"
+          preload="none"
           style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
         >
           {productVideos[videoIdx].sources.map((source, index) => (
