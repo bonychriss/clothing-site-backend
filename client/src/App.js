@@ -1,20 +1,22 @@
 
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import Home from './pages/Home';
-import Admin from './pages/Admin';
-import Products from './pages/Products';
-import ProductDetails from './pages/ProductDetails';
-import Cart from './pages/Cart';
-import Checkout from './pages/Checkout';
-import Order from './pages/Order';
-import Orders from './pages/Orders';
-import Login from './pages/Login';
-import Register from './pages/Register';
-import Profile from './pages/Profile';
 import Navbar from './components/Navbar';
 import './styles.css';
-import SelectSize from './pages/SelectSize';
+
+const Home = lazy(() => import('./pages/Home'));
+const Admin = lazy(() => import('./pages/Admin'));
+const Products = lazy(() => import('./pages/Products'));
+const ProductDetails = lazy(() => import('./pages/ProductDetails'));
+const Cart = lazy(() => import('./pages/Cart'));
+const Checkout = lazy(() => import('./pages/Checkout'));
+const Order = lazy(() => import('./pages/Order'));
+const Orders = lazy(() => import('./pages/Orders'));
+const Login = lazy(() => import('./pages/Login'));
+const Register = lazy(() => import('./pages/Register'));
+const Profile = lazy(() => import('./pages/Profile'));
+const NewArrivalsPage = lazy(() => import('./pages/NewArrivalsPage'));
+const SelectSize = lazy(() => import('./pages/SelectSize'));
 
 function App() {
   return (
@@ -22,18 +24,19 @@ function App() {
   {/* Only show Navbar if not on /admin route */}
   {!window.location.pathname.startsWith('/admin') && <Navbar />}
       <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/products" element={<Products />} />
-        <Route path="/products/:id" element={<ProductDetails />} />
-        <Route path="/cart" element={<Cart />} />
-        <Route path="/checkout" element={<Checkout />} />
-        <Route path="/order" element={<Order />} />
-        <Route path="/orders" element={<Orders />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/profile" element={<Profile />} />
-        <Route path="/admin/*" element={<Admin />} />
-        <Route path="/select-size" element={<SelectSize />} />
+        <Route path="/" element={<Suspense fallback={<div>Loading...</div>}><Home /></Suspense>} />
+        <Route path="/products" element={<Suspense fallback={<div>Loading...</div>}><Products /></Suspense>} />
+        <Route path="/products/:id" element={<Suspense fallback={<div>Loading...</div>}><ProductDetails /></Suspense>} />
+        <Route path="/cart" element={<Suspense fallback={<div>Loading...</div>}><Cart /></Suspense>} />
+        <Route path="/checkout" element={<Suspense fallback={<div>Loading...</div>}><Checkout /></Suspense>} />
+        <Route path="/order" element={<Suspense fallback={<div>Loading...</div>}><Order /></Suspense>} />
+        <Route path="/orders" element={<Suspense fallback={<div>Loading...</div>}><Orders /></Suspense>} />
+        <Route path="/login" element={<Suspense fallback={<div>Loading...</div>}><Login /></Suspense>} />
+        <Route path="/register" element={<Suspense fallback={<div>Loading...</div>}><Register /></Suspense>} />
+        <Route path="/profile" element={<Suspense fallback={<div>Loading...</div>}><Profile /></Suspense>} />
+        <Route path="/admin/*" element={<Suspense fallback={<div>Loading...</div>}><Admin /></Suspense>} />
+        <Route path="/new-arrivals" element={<Suspense fallback={<div>Loading...</div>}><NewArrivalsPage /></Suspense>} />
+        <Route path="/select-size" element={<Suspense fallback={<div>Loading...</div>}><SelectSize /></Suspense>} />
       </Routes>
     </Router>
   );

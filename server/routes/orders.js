@@ -1,9 +1,11 @@
 const express = require('express');
-const Order = require('../models/Order');
+const Order = require('../models/Order'); // This was missing in the provided context, but should be here.
+const Product = require('../models/Product');
+const { protect, admin } = require('../middleware/authMiddleware.js');
 const router = express.Router();
 
 // Place order (new schema)
-router.post('/', async (req, res) => {
+router.post('/', protect, async (req, res) => {
   try {
     console.log('Received order:', req.body);
     const { items, customer, total } = req.body;
@@ -13,12 +15,10 @@ router.post('/', async (req, res) => {
     if (!customer || !customer.name || !customer.email || !customer.address) {
       return res.status(400).json({ message: 'Customer information is incomplete' });
     }
-    for (let item of items) {
-      if (!item.name || !item.price || !item.quantity) {
-        return res.status(400).json({ message: 'Each item must have name, price, and quantity' });
-      }
-    }
-    const order = new Order(req.body);
+    
+    // Create the order without stock reduction
+    const userId = req.user._id;
+    const order = new Order({ ...req.body, userId, status: 'Pending' });
     await order.save();
     res.status(201).json({ success: true, orderId: order._id, message: 'Order placed successfully' });
   } catch (error) {
@@ -27,9 +27,23 @@ router.post('/', async (req, res) => {
   }
 });
 
+
+// Get my orders (user)
+router.get('/my', protect, async (req, res) => {
+  try {
+    const userId = req.user._id;
+    console.log('Decoded userId from token:', userId);
+    // Find orders by userId
+    const orders = await Order.find({ userId });
+    console.log('Orders found for user:', orders);
+    res.json(orders);
+  } catch (err) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 // Get all orders (admin)
-// Get all orders (admin)
-router.get('/', async (req, res) => {
+router.get('/', protect, admin, async (req, res) => {
   try {
     const orders = await Order.find();
     res.json(orders);
@@ -38,24 +52,61 @@ router.get('/', async (req, res) => {
   }
 });
 
-// Get my orders (user)
-// Get my orders (user)
-router.get('/my', async (req, res) => {
+// Get order by ID
+router.get('/:id', protect, async (req, res) => {
   try {
-  // Simple token extraction (for demo, should use middleware)
-  const authHeader = req.headers.authorization;
-  if (!authHeader) return res.status(401).json({ message: 'No token provided' });
-  const token = authHeader.split(' ')[1];
-  const jwt = require('jsonwebtoken');
-  const decoded = jwt.verify(token, 'secretkey');
-  const userEmail = decoded.email || decoded.userId;
-  console.log('Decoded email from token:', userEmail);
-  // Find orders by customer email
-  const orders = await Order.find({ 'customer.email': userEmail });
-  console.log('Orders found for user:', orders);
-  res.json(orders);
+    const order = await Order.findById(req.params.id);
+    if (!order) return res.status(404).json({ message: 'Order not found' });
+    res.json(order);
   } catch (err) {
-    res.status(401).json({ message: 'Invalid token' });
+    res.status(400).json({ message: 'Invalid request' });
+  }
+});
+
+// Update order status (admin)
+router.patch('/:id', protect, admin, async (req, res) => {
+  try {
+    const { status } = req.body;
+    if (!status || typeof status !== 'string') {
+      return res.status(400).json({ message: 'Invalid status' });
+    }
+
+    const order = await Order.findByIdAndUpdate(
+      req.params.id,
+      { status },
+      { new: true }
+    );
+    if (!order) return res.status(404).json({ message: 'Order not found' });
+    res.json(order);
+  } catch (err) {
+    res.status(400).json({ message: 'Invalid request' });
+  }
+});
+
+// Dedicated confirm endpoint for environments that block PATCH/PUT
+router.post('/:id/confirm', protect, admin, async (req, res) => {
+  try {
+    const order = await Order.findByIdAndUpdate(
+      req.params.id,
+      { status: 'Confirmed' },
+      { new: true }
+    );
+    if (!order) return res.status(404).json({ message: 'Order not found' });
+    res.json(order);
+  } catch (err) {
+    res.status(400).json({ message: 'Invalid request' });
+  }
+});
+
+
+// Delete order by ID (admin only)
+router.delete('/:id', protect, admin, async (req, res) => {
+  try {
+    const deleted = await Order.findByIdAndDelete(req.params.id);
+    if (!deleted) return res.status(404).json({ message: 'Order not found' });
+    res.json({ success: true, message: 'Order deleted' });
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to delete order' });
   }
 });
 

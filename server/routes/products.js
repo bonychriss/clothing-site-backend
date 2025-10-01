@@ -1,9 +1,12 @@
-
 const express = require('express');
 const Product = require('../models/Product');
+const { protect, admin } = require('../middleware/authMiddleware');
+
+const BestPick = require('../models/BestPick'); // Import BestPick model
 const router = express.Router();
 const multer = require('multer');
 const path = require('path');
+const sharp = require('sharp');
 
 // Set up multer for image uploads
 const storage = multer.diskStorage({
@@ -23,25 +26,31 @@ router.get('/', async (req, res) => {
   res.json(products);
 });
 
-// Get product by ID
-router.get('/:id', async (req, res) => {
-  const product = await Product.findById(req.params.id);
-  if (!product) return res.status(404).json({ message: 'Product not found' });
-  res.json(product);
-});
-
 // Add new product (with image upload)
-router.post('/', upload.single('image'), async (req, res) => {
+router.post('/', protect, admin, upload.single('image'), async (req, res) => {
   try {
-    const { name, price, category, description } = req.body;
-    let image = '';
+    const { name, price, category, description, variants } = req.body;
+    let imagePath = '';
     if (req.file) {
-      image = '/images/' + req.file.filename;
+      imagePath = '/images/' + req.file.filename;
+
+      // Create a low-quality image placeholder (LQIP)
+      const lqipPath = path.join(__dirname, '../../client/public/images', `lqip-${req.file.filename}`);
+      await sharp(req.file.path)
+        .resize(20) // Resize to a small width
+        .blur(2)   // Apply a slight blur
+        .toFile(lqipPath);
+
     } else if (req.body.image) {
-      image = req.body.image;
+      imagePath = req.body.image;
     }
-    const product = new Product({ name, price, category, image, description });
+    const productData = { name, price, category, image: imagePath, description, isNewArrival: true };
+    if (variants) {
+      productData.variants = JSON.parse(variants);
+    }
+    const product = new Product(productData);
     await product.save();
+
     res.status(201).json(product);
   } catch (err) {
     console.error('Product upload error:', err);
@@ -55,20 +64,45 @@ router.post('/', upload.single('image'), async (req, res) => {
   }
 });
 
+// Toggle stock status
+router.patch('/:id/stock', protect, admin, async (req, res) => {
+  try {
+    const { inStock } = req.body;
+    const product = await Product.findById(req.params.id);
+    if (!product) return res.status(404).json({ message: 'Product not found' });
+
+    product.inStock = inStock;
+    await product.save();
+    res.json(product);
+  } catch (err) {
+    res.status(500).json({ message: 'Server error while updating stock status.' });
+  }
+});
 
 // Update product by ID (with image upload)
-router.put('/:id', upload.single('image'), async (req, res) => {
+router.put('/:id', protect, admin, upload.single('image'), async (req, res) => {
   try {
-    const { name, price, category, description } = req.body;
-    let image;
+    const { name, price, category, description, variants } = req.body;
+    const updateData = { ...req.body };
+
+    if (variants && typeof variants === 'string') {
+      updateData.variants = JSON.parse(variants);
+    }
+
     if (req.file) {
-      image = '/images/' + req.file.filename;
-    } else if (req.body.image) {
-      image = req.body.image;
+      const imagePath = '/images/' + req.file.filename;
+      updateData.image = imagePath;
+
+      // Create a low-quality image placeholder (LQIP) for the new image
+      const lqipPath = path.join(__dirname, '../../client/public/images', `lqip-${req.file.filename}`);
+      await sharp(req.file.path)
+        .resize(20) // Resize to a small width
+        .blur(2)   // Apply a slight blur
+        .toFile(lqipPath);
     }
     const updated = await Product.findByIdAndUpdate(
       req.params.id,
-      { name, price, category, description, image },
+      updateData,
       { new: true }
     );
     if (!updated) return res.status(404).json({ message: 'Product not found' });
@@ -78,8 +112,15 @@ router.put('/:id', upload.single('image'), async (req, res) => {
   }
 });
 
+// Get product by ID
+router.get('/:id', async (req, res) => {
+  const product = await Product.findById(req.params.id);
+  if (!product) return res.status(404).json({ message: 'Product not found' });
+  res.json(product);
+});
+
 // Delete product by ID
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', protect, admin, async (req, res) => {
   try {
     const deleted = await Product.findByIdAndDelete(req.params.id);
     if (!deleted) return res.status(404).json({ message: 'Product not found' });

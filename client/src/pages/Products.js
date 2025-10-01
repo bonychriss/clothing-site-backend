@@ -3,57 +3,55 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import CartSidebar from '../components/CartSidebar';
 
+// Skeleton loader and error fallback for images
+function ImageWithLoader({ src, alt, lqip }) {
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState(false);
+  return (
+    <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+      {loading && lqip && (
+        <img
+          src={lqip}
+          alt={alt + ' placeholder'}
+          style={{
+            position: 'absolute',
+            inset: 0,
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            filter: 'blur(12px)',
+            transition: 'opacity 0.3s',
+            opacity: loading ? 1 : 0,
+            borderRadius: '0.75rem',
+            zIndex: 1,
+          }}
+        />
+      )}
+      <img
+        src={error ? '/images/placeholder.png' : src}
+        alt={alt}
+        loading="lazy"
+        style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '0.75rem', display: 'block', transition: 'opacity 0.3s', opacity: loading ? 0 : 1, position: 'relative', zIndex: 2 }}
+        onLoad={() => setLoading(false)}
+        onError={() => { setError(true); setLoading(false); }}
+      />
+    </div>
+  );
+}
+
+
 
 // Utility
-const formatCurrency = (n) => `$${Number(n).toFixed(2)}`;
+// eslint-disable-next-line no-unused-vars
+// const formatCurrency = (n) => `$${Number(n).toFixed(2)}`;
 
 // Local fallback products with admin flags
+// eslint-disable-next-line no-unused-vars
+/*
 const localProducts = [
-  { id: 'mens-jeans', name: "Men's Jeans", image: process.env.PUBLIC_URL + "/images/mens-jeans.jpg", price: 39.99, listPrice: 49.99, category: 'Men', rating: 4.4, reviews: 70805, isBestSeller: true, desc: 'Premium denim with stretch for everyday comfort.' },
-  { id: 'boyz-jeans', name: "Boys' Jeans", image: process.env.PUBLIC_URL + "/images/boyz jeans.jpg", price: 24.99, listPrice: 34.99, category: 'Boys', rating: 4.2, reviews: 1805, desc: 'Durable and comfy jeans for kids on the move.' },
-  { id: 'sweater', name: 'Cozy Sweater', image: process.env.PUBLIC_URL + "/images/sweater.jpg", price: 29.99, listPrice: 39.99, category: 'Women', rating: 4.6, reviews: 15094, desc: 'Soft knit with a relaxed fit to keep you warm.' },
-  { id: 'suit', name: 'Classic Suit', image: process.env.PUBLIC_URL + "/images/suit.jpg", price: 129.99, listPrice: 159.99, category: 'Men', rating: 4.7, reviews: 4364, isOverallPick: true, desc: 'Tailored silhouette with stretch fabric for all-day wear.' },
-  { id: 'dresses', name: 'Summer Dress', image: process.env.PUBLIC_URL + "/images/dresses.jpg", price: 49.99, listPrice: 59.99, category: 'Women', rating: 4.3, reviews: 874, desc: 'Breezy and flattering, perfect for sunny days.' },
-  { id: 'shirt', name: 'Casual Shirt', image: process.env.PUBLIC_URL + "/images/shirt.jpg", price: 19.99, listPrice: 24.99, category: 'Men', rating: 4.1, reviews: 3421, desc: 'Breathable cotton blend for effortless style.' },
-  { id: 'beest-of-all', name: 'Best Of All Set', image: process.env.PUBLIC_URL + "/images/beest of all.jpg", price: 54.99, listPrice: 69.99, category: 'Women', rating: 4.5, reviews: 612, desc: 'Mix-and-match set designed to elevate your look.' },
-  { id: 'shoes-1', name: 'Sneakers', image: process.env.PUBLIC_URL + "/images/shoes 1.jpg", price: 59.99, listPrice: 79.99, category: 'Shoes', rating: 4.6, reviews: 2310, desc: 'Everyday sneakers with cushioned support.' },
-  { id: 'shoes-2', name: 'Running Shoes', image: process.env.PUBLIC_URL + "/images/shoes2.jpg", price: 69.99, listPrice: 89.99, category: 'Shoes', rating: 4.4, reviews: 1543, desc: 'Lightweight runners built for speed and comfort.' },
-  { id: 'shoes-3', name: 'Trainers', image: process.env.PUBLIC_URL + "/images/shoes3.jpg", price: 62.49, listPrice: 74.99, category: 'Shoes', rating: 4.2, reviews: 845, desc: 'Versatile trainers for gym and street.' },
-  { id: 'shoes-4', name: 'Court Shoes', image: process.env.PUBLIC_URL + "/images/shoes 4.jpg", price: 64.99, listPrice: 84.99, category: 'Shoes', rating: 4.3, reviews: 541, desc: 'Court-ready grip with everyday style.' },
-  { id: 'shoes-5', name: 'Mesh Sneakers', image: process.env.PUBLIC_URL + "/images/shoes 5.jpg", price: 72.5, listPrice: 89.99, category: 'Shoes', rating: 4.5, reviews: 999, desc: 'Breathable mesh upper with responsive cushioning.' },
-  { id: 'shoes-6', name: 'Casual Shoes', image: process.env.PUBLIC_URL + "/images/shoes6.jpg", price: 57.0, listPrice: 69.99, category: 'Shoes', rating: 4.0, reviews: 432, desc: 'Weekend-ready shoes with a clean profile.' },
-  { id: 'shoes-7', name: 'Street Sneakers', image: process.env.PUBLIC_URL + "/images/shoes7.jpg", price: 66.0, listPrice: 84.0, category: 'Shoes', rating: 4.3, reviews: 1288, desc: 'Street style meets comfort in these staples.' },
-  { 
-    _id: 'mens-jeans', // Use _id for consistency with backend
-    id: 'mens-jeans', 
-    name: "Men's Jeans", 
-    image: process.env.PUBLIC_URL + "/images/mens-jeans.jpg", 
-    price: 39.99, 
-    listPrice: 49.99, 
-    category: 'Men', 
-    rating: 4.4, 
-    reviews: 70805, 
-    isBestSeller: true, 
-    desc: 'Premium denim with stretch for everyday comfort.',
-    addedByAdmin: true, // Critical: Mark as admin-added
-    isActive: true
-  },
-  { 
-    _id: 'boyz-jeans', 
-    id: 'boyz-jeans', 
-    name: "Boys' Jeans", 
-    image: process.env.PUBLIC_URL + "/images/boyz jeans.jpg", 
-    price: 24.99, 
-    listPrice: 34.99, 
-    category: 'Boys', 
-    rating: 4.2, 
-    reviews: 1805, 
-    desc: 'Durable and comfy jeans for kids on the move.',
-    addedByAdmin: true,
-    isActive: true
-  },
-  // ... continue for all products
+  // ...all product objects...
 ];
+*/
 
 const StarRating = ({ value, onChange, size = '1.1rem' }) => {
   const stars = [1, 2, 3, 4, 5];
@@ -76,28 +74,35 @@ const StarRating = ({ value, onChange, size = '1.1rem' }) => {
 };
 
 function Products() {
-  const [popupMsg, setPopupMsg] = useState("");
+  const [popupMsg] = useState("");
   const [products, setProducts] = useState([]);
   const [cart, setCart] = useState([]);
   const [showCart, setShowCart] = useState(false);
   const [ratings, setRatings] = useState({});
-  const [selectedSizes, setSelectedSizes] = useState({});
   const [currency, setCurrency] = useState('TZS');
   const [usdRate, setUsdRate] = useState(2600); // Default fallback
   const [loadingRate, setLoadingRate] = useState(false);
+  // Remove unused selectedSizes
   const navigate = useNavigate();
   const location = useLocation();
   // Get search query from URL
   const searchParams = new URLSearchParams(location.search);
   const searchQuery = searchParams.get('search')?.toLowerCase() || '';
-  // Handle size selection returned from SelectSize page
-  React.useEffect(() => {
-    if (location.state && location.state.selectedSize && location.state.product) {
-      setSelectedSizes(prev => ({ ...prev, [location.state.product.id]: location.state.selectedSize }));
-      // Clear state so it doesn't persist on next navigation
-      navigate('.', { replace: true, state: {} });
+  const categoryParam = searchParams.get('category');
+  const sortParam = searchParams.get('sort');
+
+  const isAuthenticated = !!localStorage.getItem('token');
+  // Add to cart handler now navigates to SelectSize page
+  const handleAddToCart = (product, id) => {
+    if (!isAuthenticated) {
+      navigate('/register'); // or '/login' if you prefer
+      return;
     }
-  }, [location.state, navigate]);
+    navigate('/select-size', { state: { product } });
+  };
+
+  // Handle size selection returned from SelectSize page
+  // Remove broken useEffect for selectedSize
 
   // Fetch live USD rate from exchangerate.host
   useEffect(() => {
@@ -128,7 +133,15 @@ function Products() {
   const [priceMin, setPriceMin] = useState('');
   const [priceMax, setPriceMax] = useState('');
   const [ratingMin, setRatingMin] = useState(0);
-  const [sortKey, setSortKey] = useState('featured');
+  const [sortKey, setSortKey] = useState(sortParam || 'featured');
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
+
+  // Handle "All Products" sort option to clear category filters
+  useEffect(() => {
+    if (sortKey === 'all') {
+      setSelectedCats(new Set());
+    }
+  }, [sortKey]);
 
   // Load and persist ratings locally
   useEffect(() => {
@@ -143,24 +156,44 @@ function Products() {
 
   // Load products from API only
   useEffect(() => {
-    const fetchProducts = () => {
-      fetch('/api/products')
-        .then(res => (res.ok ? res.json() : Promise.reject()))
-        .then(data => {
-          setProducts(Array.isArray(data) ? data : []);
-          try { localStorage.setItem('backendProducts', JSON.stringify(data)); } catch {}
-        })
-        .catch(() => setProducts([]));
+    const fetchAllProducts = async () => {
+      try {
+        const [productsRes, bestPicksRes] = await Promise.all([
+          fetch('/api/products'),
+          fetch('/api/best-picks')
+        ]);
+        const productsData = productsRes.ok ? await productsRes.json() : [];
+        const bestPicksData = bestPicksRes.ok ? await bestPicksRes.json() : [];
+        // Mark best picks so we can identify them later
+        const markedBestPicks = (Array.isArray(bestPicksData) ? bestPicksData : []).map(p => ({ ...p, isBestPick: true }));
+
+        const combined = [...(Array.isArray(productsData) ? productsData : []), ...markedBestPicks];
+        const uniqueProducts = Array.from(new Map(combined.map(p => [p._id || p.name, p])).values());
+        setProducts(uniqueProducts);
+        try { localStorage.setItem('backendProducts', JSON.stringify(uniqueProducts)); } catch {}
+      } catch (err) {
+        setProducts([]);
+      }
     };
-    fetchProducts();
-    window.addEventListener('productsUpdated', fetchProducts);
-    return () => window.removeEventListener('productsUpdated', fetchProducts);
+    fetchAllProducts();
+    window.addEventListener('productsUpdated', fetchAllProducts);
+    return () => window.removeEventListener('productsUpdated', fetchAllProducts);
   }, []);
 
   const allCategories = useMemo(() => {
     const s = new Set((products || []).map(p => p.category || 'General'));
     return Array.from(s);
   }, [products]);
+
+  // If a category is provided in the URL, preselect it in filters
+  useEffect(() => {
+    if (!categoryParam) return;
+    const requested = categoryParam.split(',').map((s) => s.trim().toLowerCase()).filter(Boolean);
+    if (!requested.length) return;
+    const lowerToActual = new Map(allCategories.map((c) => [String(c).toLowerCase(), c]));
+    const resolved = requested.map((r) => lowerToActual.get(r) || r);
+    setSelectedCats(new Set(resolved));
+  }, [categoryParam, allCategories]);
 
   const applyFilters = (list) => {
     let out = list;
@@ -183,6 +216,12 @@ function Products() {
   const applySort = (list) => {
     const copy = [...list];
     switch (sortKey) {
+      case 'all':
+        // No specific sort order, just clears filters via useEffect
+        break;
+      case 'new-arrivals':
+        copy.sort((a, b) => (b.isNewArrival ? 1 : 0) - (a.isNewArrival ? 1 : 0));
+        break;
       case 'price-asc':
         copy.sort((a,b) => (a.price ?? 0) - (b.price ?? 0));
         break;
@@ -204,8 +243,8 @@ function Products() {
     return copy;
   };
 
-  const filtered = applyFilters(products);
-  const visible = applySort(filtered);
+  // const filtered = applyFilters(products); // unused
+  // Removed duplicate declaration of 'visible'.
 
   const toggleCategory = (cat) => {
     const next = new Set(selectedCats);
@@ -213,58 +252,22 @@ function Products() {
     setSelectedCats(next);
   };
 
-  const handleAddToCart = (product) => {
-    // Always use backend _id if available
-    let prodToAdd = product;
-    if (!product._id) {
-      const backendProducts = JSON.parse(localStorage.getItem('backendProducts') || '[]');
-      // Try to match by name and price (in case name is not unique)
-      const match = backendProducts.find(p => p.name === product.name && p.price === product.price);
-      if (match && match._id) {
-        prodToAdd = { ...product, _id: match._id };
-      } else {
-        // If no match, do not add to cart
-        setPopupMsg("This product cannot be checked out. Please select a product from the main catalog.");
-        setTimeout(() => setPopupMsg("") , 2500);
-        return;
-      }
-    }
-    // Only add products with valid _id
-    if (!prodToAdd._id) {
-      setPopupMsg("This product cannot be checked out. Please select a product from the main catalog.");
-      setTimeout(() => setPopupMsg("") , 2500);
-      return;
-    }
-    const normalized = {
-      _id: prodToAdd._id,
-      id: prodToAdd._id || prodToAdd.id || prodToAdd.name,
-      name: prodToAdd.name,
-      price: prodToAdd.price,
-      image: prodToAdd.image,
-      size: prodToAdd.size || '',
-    };
-    const updatedCart = [...cart, normalized];
-    setCart(updatedCart);
-    localStorage.setItem('cart', JSON.stringify(updatedCart));
-    setShowCart(true);
-    setPopupMsg("Your item is added to cart!");
-    setTimeout(() => setPopupMsg("") , 2500);
-    navigate('/cart');
-  };
   const handleRemoveFromCart = (idx) => setCart(cart.filter((_, i) => i !== idx));
   const handleCloseCart = () => setShowCart(false);
 
   const getId = (p, idx) => p._id || p.id || String(idx);
+
+  const visible = useMemo(() => {
+    const filtered = applyFilters(products);
+    return applySort(filtered);
+  }, [products, ratings, selectedCats, priceMin, priceMax, ratingMin, sortKey, applyFilters, applySort]);
 
   // Styles
   const pageStyle = { maxWidth: 'none', width: '100%', margin: '0', padding: '0 2rem 2rem 0', boxSizing: 'border-box', display: 'block' };
   const layoutStyle = {
     display: 'grid',
     gridTemplateColumns: '260px 1fr',
-    gap: '1.5rem',
-  };
-  const responsiveWrap = {
-    display: 'block',
+    gap: '2rem',
   };
   const sidebarStyle = {
     position: 'sticky',
@@ -295,11 +298,10 @@ function Products() {
     gap: '1.5rem',
     minHeight: 120,
   };
-
-  const isNarrow = typeof window !== 'undefined' ? window.innerWidth < 980 : false;
-
+  
   return (
-    <div className="products products-page" style={pageStyle}>
+    <div className="products products-page" style={pageStyle}
+    >
       {popupMsg && (
         <div style={{position:'fixed',top:80,right:30,zIndex:9999,background:'#FFD700',color:'#222',padding:'1rem 2rem',borderRadius:12,boxShadow:'0 2px 12px #0002',fontWeight:700,fontSize:'1.1rem'}}>
           {popupMsg}
@@ -330,12 +332,25 @@ function Products() {
         </div>
       </div>
 
+      {/* Mobile Filter Toggle Button */}
+      <div className="mobile-filter-toggle" style={{ marginBottom: '1rem' }}>
+        <button
+          onClick={() => setShowMobileFilters(!showMobileFilters)}
+          style={{ background: '#FFD700', color: '#222', border: 'none', borderRadius: 8, padding: '0.6rem 1.2rem', fontWeight: 700, fontSize: '1rem', cursor: 'pointer', width: '100%' }}
+        >
+          {showMobileFilters ? 'Hide' : 'Show'} Filters
+        </button>
+      </div>
+
+
       {/* Top bar: result count and sort */}
       <div style={topbarStyle}>
         <div style={{ color: '#555' }}>{visible.length} items</div>
         <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <span style={{ color: '#333', fontWeight: 600 }}>Sort by:</span>
           <select value={sortKey} onChange={(e) => setSortKey(e.target.value)} style={{ padding: '0.4rem 0.6rem', borderRadius: 8, border: '1px solid #ddd' }}>
+            <option value="all">All Products</option>
+            <option value="new-arrivals">New Arrivals</option>
             <option value="featured">Featured</option>
             <option value="price-asc">Price: Low to High</option>
             <option value="price-desc">Price: High to Low</option>
@@ -346,21 +361,14 @@ function Products() {
       </div>
 
       {/* Layout: sidebar + grid */}
-      <div style={isNarrow ? responsiveWrap : layoutStyle}>
+      <div style={layoutStyle} className="products-layout-responsive">
         {/* Sidebar: hide on mobile */}
-        <style>{`
-          @media (max-width: 700px) {
-            .products-sidebar-hide-mobile {
-              display: none !important;
-            }
-          }
-        `}</style>
-        <aside className="products-sidebar-hide-mobile" style={isNarrow ? { ...sidebarStyle, marginBottom: '1rem' } : sidebarStyle}>
+        <aside className={`products-sidebar ${showMobileFilters ? 'mobile-visible' : ''}`} style={sidebarStyle}>
           <div style={{ marginBottom: '1rem' }}>
             <div style={sectionTitle}>Departments</div>
             {allCategories.map((c) => (
               <label key={c} style={filterItem}>
-                <input type="checkbox" checked={selectedCats.has(c)} onChange={() => toggleCategory(c)} />
+                <input type="checkbox" checked={selectedCats.has(c)} onChange={() => toggleCategory(c)} style={{ accentColor: '#FFD700' }} />
                 <span style={{ color: '#333' }}>{c}</span>
               </label>
             ))}
@@ -392,16 +400,9 @@ function Products() {
           </div>
         </aside>
 
-        {/* Grid */}
+        {/* Best Picks */}
         <main>
-      <style>{`
-        @media (max-width: 700px) {
-          .products-grid-responsive {
-            grid-template-columns: repeat(2, 1fr) !important;
-          }
-        }
-      `}</style>
-      <div style={gridStyle} className="products-grid-responsive">
+          <div style={gridStyle} className="products-grid-responsive">
             {visible.length === 0 ? (
               <div style={{ gridColumn: '1/-1', textAlign: 'center', color: '#888', fontSize: '1.1rem', padding: '2rem 0' }}>
                 No products match your filters.
@@ -424,15 +425,53 @@ function Products() {
                     alignItems: 'center',
                     textAlign: 'center',
                     justifyContent: 'flex-start',
+                    overflow: 'hidden',
                     minHeight: 380,
-                  }}>
+                  }}> 
                     {/* Badges */}
-                    {product.isBestSeller && <span style={{ position: 'absolute', top: 12, left: 12, background: '#FF9900', color: '#fff', fontWeight: 700, fontSize: '0.8rem', borderRadius: 6, padding: '2px 8px' }}>Best Seller</span>}
-                    {product.isOverallPick && <span style={{ position: 'absolute', top: 12, right: 12, background: '#232F3E', color: '#fff', fontWeight: 700, fontSize: '0.8rem', borderRadius: 6, padding: '2px 8px' }}>Overall Pick</span>}
+                    {product.isNewArrival === true && (
+                      <div style={{
+                        position: 'absolute',
+                        top: '15px',
+                        right: '-30px',
+                        background: '#FFD700',
+                        color: '#222',
+                        padding: '5px 35px',
+                        fontWeight: 'bold',
+                        fontSize: '12px',
+                        transform: 'rotate(45deg)',
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                        zIndex: 50,
+                        letterSpacing: '1px',
+                        textShadow: '0 1px 2px #fff8',
+                        whiteSpace: 'nowrap',
+                        pointerEvents: 'none',
+                        userSelect: 'none',
+                      }}>NEW ARRIVAL</div>
+                    )}
+                    {product.inStock && product.isBestSeller && <span style={{ position: 'absolute', top: 12, left: 12, background: '#FF9900', color: '#fff', fontWeight: 700, fontSize: '0.8rem', borderRadius: 6, padding: '2px 8px' }}>Best Seller</span>}
+                    {/* Remove SOLD OUT badge for Best Picks */}
+                    {/* Remove SOLD OUT badge for Sabor Best Picks */}
+                    {!product.inStock && !product.isBestSeller && !product.isOverallPick && !product.isBestPick && product.category !== 'Sabor Best Picks' && (
+                      <div style={{
+                        position: 'absolute',
+                        top: '15px',
+                        right: '-30px',
+                        background: '#e74c3c',
+                        color: 'white',
+                        padding: '5px 35px',
+                        fontWeight: 'bold',
+                        fontSize: '12px',
+                        transform: 'rotate(45deg)',
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                        zIndex: 10,
+                      }}>SOLD OUT</div>
+                    )}
+                    {product.inStock && product.isOverallPick && <span style={{ position: 'absolute', top: 12, right: 12, background: '#232F3E', color: '#fff', fontWeight: 700, fontSize: '0.8rem', borderRadius: 6, padding: '2px 8px' }}>Overall Pick</span>}
 
                     {/* Image */}
-                    <div style={{ width: '100%', height: 220, marginBottom: '1rem', overflow: 'hidden', borderRadius: '0.75rem' }}>
-                      <img src={product.image} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                    <div style={{ width: '100%', height: 220, marginBottom: '1rem', overflow: 'hidden', borderRadius: '0.75rem', position: 'relative' }}>
+                      <ImageWithLoader src={product.image} alt={product.name} lqip={product.lqip} />
                     </div>
 
                     {/* Title */}
@@ -460,10 +499,18 @@ function Products() {
                     <div style={{ width: '100%', marginTop: 8 }}>
                       <button
                         type="button"
-                        style={{ background: '#FFD700', color: '#222', border: 'none', borderRadius: 8, padding: '0.5rem 1.2rem', fontWeight: 700, width: '100%', maxWidth: 180, cursor: 'pointer', marginBottom: 6 }}
-                        onClick={() => navigate('/select-size', { state: { product, selectedSize: selectedSizes[id] || '' } })}
+                        style={{ background: '#FFD700', color: '#222', border: 'none', borderRadius: 8, padding: '0.5rem 1.2rem', fontWeight: 700, width: '100%', maxWidth: 180, cursor: (!product.inStock && !product.isBestPick) ? 'not-allowed' : 'pointer', marginBottom: 6, opacity: (!product.inStock && !product.isBestPick) ? 0.6 : 1 }}
+                        aria-label={'Add to cart'}
+                        disabled={!product.inStock && !product.isBestPick}
+                        onClick={() => {
+                          if (product.inStock || product.isBestPick) handleAddToCart(product, id);
+                        }}
                       >
-                        {selectedSizes[id] ? `Size: ${selectedSizes[id]}` : 'Add to Cart'}
+                        {(!product.inStock && !product.isBestPick) ? (
+                          <span>Out of Stock</span>
+                        ) : (
+                          <><i className="fas fa-shopping-cart" style={{ marginRight: '8px' }}></i><span>Add to Cart</span></>
+                        )}
                       </button>
                     </div>
 
@@ -475,17 +522,53 @@ function Products() {
         </main>
       </div>
 
+
       {showCart && (
         <CartSidebar cart={cart} onClose={handleCloseCart} onRemove={handleRemoveFromCart} />
       )}
 
       {/* Simple responsive tweak */}
       <style>{`
-        .products.products-page{max-width:none!important;margin:1rem 0!important;padding:0 2rem 2rem 0!important;display:block!important;align-items:stretch!important;justify-content:flex-start!important;}
+        .products.products-page {
+          padding: 0 2rem 2rem 2rem !important;
+        }
+        .mobile-filter-toggle {
+          display: none;
+        }
+        /* Tablet and smaller desktop */
         @media (max-width: 980px) {
-          .products.products-page { padding: 0 1rem 2rem !important; }
+          .products-layout-responsive {
+            grid-template-columns: 1fr !important;
+          }
+          .products-sidebar {
+            display: none; /* Hide sidebar on mobile */
+            position: static;
+            margin-bottom: 1.5rem;
+          }
+          .products-sidebar.mobile-visible {
+            display: block; /* Show when toggled */
+          }
+          .mobile-filter-toggle {
+            display: block; /* Show the toggle button */
+            max-width: 600px;
+            margin: 0 auto 1rem auto;
+          }
+          .products-grid-responsive {
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)) !important;
+          }
+        }
+        /* Mobile phones */
+        @media (max-width: 600px) {
+          .products.products-page {
+            padding: 0 1rem 2rem 1rem !important;
+          }
+          .products-grid-responsive {
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)) !important;
+            gap: 1rem !important;
+          }
         }
       `}</style>
+
     </div>
   );
 }

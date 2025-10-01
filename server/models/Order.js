@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 
 const orderSchema = new mongoose.Schema({
+  userId: { type: String, required: true },
   items: [
     {
       productId: { type: String, required: true },
@@ -18,7 +19,7 @@ const orderSchema = new mongoose.Schema({
     address: { type: String, required: true }
   },
   total: { type: Number, required: true },
-  status: { type: String, default: 'pending' },
+  status: { type: String, enum: ['Pending', 'Confirmed', 'Cancelled'], default: 'Pending' },
   createdAt: { type: Date, default: Date.now },
   currency: { type: String, default: 'TZS' },
   orderDate: { type: Date }

@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 const HomeIcon = () => <span style={{ marginRight: 8 }}>🏠</span>;
 const ProductsIcon = () => <span style={{ marginRight: 8 }}>👗</span>;
 const OrdersIcon = () => <span style={{ marginRight: 8 }}>📦</span>;
+const NewArrivalsIcon = () => <span style={{ marginRight: 8 }}>✨</span>;
 const CartIcon = () => <span style={{ marginRight: 8 }}>🛒</span>;
 const AccountIcon = () => <span style={{ marginRight: 8 }}>👤</span>;
 const LoginIcon = () => <span style={{ marginRight: 8 }}>🔑</span>;
@@ -99,7 +100,13 @@ function Navbar() {
           <img
             src="/images/sabor Espanol logo.jpeg"
             alt="Sabor Espanol Logo"
-            style={{ height: 48, marginRight: 8, verticalAlign: 'middle' }}
+            style={{
+              height: 48,
+              marginRight: 8,
+              verticalAlign: 'middle',
+              borderRadius: '50%',
+              objectFit: 'cover'
+            }}
           />
           <Link to="/" style={{ fontWeight: 700, fontSize: 22, color: '#FFD700', textDecoration: 'none', minWidth: 70 }}>Home</Link>
         </div>
@@ -185,6 +192,7 @@ function Navbar() {
           }}>
           <Link to="/" onClick={handleLinkClick} style={menuLinkStyle}><HomeIcon />Home</Link>
           <Link to="/products" onClick={handleLinkClick} style={menuLinkStyle}><ProductsIcon />Products</Link>
+          <Link to="/new-arrivals" onClick={handleLinkClick} style={menuLinkStyle}><NewArrivalsIcon />New Arrivals</Link>
           <Link to="/orders" onClick={handleLinkClick} style={menuLinkStyle}><OrdersIcon />Orders</Link>
           <Link to="/cart" onClick={handleLinkClick} style={menuLinkStyle}><CartIcon />Cart</Link>
           <Link to="/profile" onClick={handleLinkClick} style={menuLinkStyle}><AccountIcon />Account</Link>

@@ -91,6 +91,7 @@ function Profile() {
     ])
       .then(([userData, ordersData]) => {
         setUser(userData);
+        console.log('Orders data from backend:', ordersData);
         setOrders(Array.isArray(ordersData) ? ordersData : []);
         setLoading(false);
       })

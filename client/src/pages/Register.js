@@ -3,16 +3,7 @@ import { useNavigate } from 'react-router-dom';
 
 function Register() {
   // Country code mapping
-  const countryCodes = {
-    Tanzania: '+255',
-    Kenya: '+254',
-    Uganda: '+256',
-    Rwanda: '+250',
-    Burundi: '+257',
-    'South Africa': '+27',
-    Nigeria: '+234',
-    Ghana: '+233',
-  };
+  // Moved inside useEffect to avoid dependency warning
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -21,12 +12,22 @@ function Register() {
 
   // Update phone prefix when country changes
   React.useEffect(() => {
+    const countryCodes = {
+      Tanzania: '+255',
+      Kenya: '+254',
+      Uganda: '+256',
+      Rwanda: '+250',
+      Burundi: '+257',
+      'South Africa': '+27',
+      Nigeria: '+234',
+      Ghana: '+233',
+    };
     if (country && countryCodes[country]) {
       if (!phone.startsWith(countryCodes[country])) {
         setPhone(prev => countryCodes[country] + (prev.replace(/^\+\d+/, '')));
       }
     }
-  }, [country]);
+  }, [country, phone]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
@@ -51,7 +52,11 @@ function Register() {
         localStorage.setItem('user', JSON.stringify(data.user));
       }
       setSuccess(true);
-      setTimeout(() => navigate('/'), 1200); // Redirect to home after 1.2s
+      setTimeout(() => {
+        navigate('/');
+        // Notify other components (like Navbar) that auth state has changed
+        window.dispatchEvent(new Event('authChange'));
+      }, 2500); // Redirect to home after 2.5s
     } catch (err) {
       setError('Registration failed');
     }
@@ -59,14 +64,35 @@ function Register() {
   };
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f8f8fa' }}>
-      <div style={{ background: '#fff', borderRadius: 16, boxShadow: '0 4px 32px rgba(0,0,0,0.10)', padding: '2.5rem 2.5rem 2rem', minWidth: 340, maxWidth: 400, width: '100%' }}>
+    <div
+      style={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: `url('/images/sliding barner2.jpg') center center / cover no-repeat`,
+        position: 'relative',
+      }}
+    >
+      <div style={{
+        background: 'rgba(255,255,255,0.10)', // more transparent
+        borderRadius: 16,
+        boxShadow: '0 4px 32px rgba(0,0,0,0.10)',
+        padding: '2rem 1.5rem 1.5rem', // smaller padding
+        minWidth: 280, // smaller min width
+        maxWidth: 340, // smaller max width
+        width: '100%',
+        backdropFilter: 'blur(18px)', // stronger blur
+        WebkitBackdropFilter: 'blur(18px)',
+        border: '1.5px solid rgba(255,255,255,0.25)',
+      }}>
         <h1 style={{ color: '#222', fontWeight: 800, fontSize: '2.2rem', marginBottom: '1.5rem', textAlign: 'center' }}>Register</h1>
         {loading && <p style={{ textAlign: 'center', color: '#888' }}>Registering...</p>}
         {error && <p style={{ color: 'red', textAlign: 'center' }}>{error}</p>}
         {success ? (
           <div style={{ textAlign: 'center' }}>
-            <p style={{ color: '#1a7f37', fontWeight: 600 }}>Registration successful! You can now <a href="/login" style={{ color: '#FFD700', fontWeight: 700, textDecoration: 'none' }}>login</a>.</p>
+            <p style={{ color: '#222', fontWeight: 700, fontSize: '1.2rem' }}>Welcome to Sabor Español, {name}!</p>
+            <p style={{ color: '#555', marginTop: 8 }}>Redirecting you now...</p>
           </div>
         ) : (
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
