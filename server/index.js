@@ -28,10 +28,6 @@ mongoose.connect(process.env.MONGO_URI, {
   process.exit(1); // Exit the process with a failure code
 });
 
-// Basic route
-app.get('/', (req, res) => {
-  res.send('Clothing Store API');
-});
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
