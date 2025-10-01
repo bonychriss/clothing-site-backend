@@ -15,6 +15,10 @@ app.use(cors({
   origin: 'https://sabor-espanol-vrwk.onrender.com',
   credentials: true
 }));
+app.options('*', cors({
+  origin: 'https://sabor-espanol-vrwk.onrender.com',
+  credentials: true
+}));
 app.use(express.json({ limit: '10mb' }));
 
 // Connect to MongoDB
