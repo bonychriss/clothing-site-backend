@@ -319,7 +319,7 @@ export default function Home() {
           <div style={{ minWidth: 220, flex: 1 }}>
             <h3 style={{ color: '#FFD700', marginBottom: 12 }}>{t('exclusiveOffers')}</h3>
             <form onSubmit={(e) => { e.preventDefault(); alert('Subscribed!'); }} style={{ display: 'flex', gap: 10 }}>
-              <input type="email" placeholder={t('yourEmail')} required style={{ padding: '0.5rem', borderRadius: 6, border: 'none', flex: 1 }} />
+              <input id="subscribe-email" name="email" type="email" placeholder={t('yourEmail')} required style={{ padding: '0.5rem', borderRadius: 6, border: 'none', flex: 1 }} />
               <button type="submit" style={{ background: '#FFD700', color: '#222', border: 'none', borderRadius: 6, padding: '0.5rem 0.9rem', fontWeight: 700 }}>{t('subscribe')}</button>
             </form>
           </div>
