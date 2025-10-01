@@ -2,6 +2,7 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate, useLocation, Routes, Route, Navigate } from 'react-router-dom';
 import { FaTachometerAlt, FaBoxOpen, FaStar, FaClipboardList, FaUserCircle, FaMoon, FaSun, FaSignOutAlt } from 'react-icons/fa';
 
+import { fetchFromApi as apiFetch } from '../utils/api';
 const getStyles = (theme) => ({
   header: {
     textAlign: 'center',
@@ -96,16 +97,11 @@ function AddProductForm({ onProductAdded, styles }) {
       formData.append('category', form.category);
       formData.append('description', form.description);
       if (form.image) formData.append('image', form.image);
-      const token = localStorage.getItem('token');
-      const headers = {};
-      if (token) headers['Authorization'] = `Bearer ${token}`;
-      const res = await fetch('/api/products', {
+
+      const newProduct = await apiFetch('/api/products', {
         method: 'POST',
-        headers,
         body: formData,
       });
-      if (!res.ok) throw new Error('Failed to add product');
-      const newProduct = await res.json();
       onProductAdded(newProduct);
       setForm({ name: '', price: '', category: '', description: '', image: null });
       setImagePreview(null);
@@ -169,9 +165,8 @@ function Admin() {
   useEffect(() => {
     const checkStatus = async () => {
       try {
-        const API_BASE = process.env.REACT_APP_API_BASE_URL || '';
-        const res = await fetch(`${API_BASE}/api/health`);
-        if (res.ok) {
+        const data = await apiFetch('/api/health');
+        if (data.status === 'ok') {
           setBackendStatus('online');
         } else {
           setBackendStatus('offline');
@@ -236,24 +231,15 @@ function Admin() {
   const handleBulkDeleteOrders = async () => {
     if (!window.confirm('Are you sure you want to delete all selected orders? This cannot be undone.')) return;
     try {
-      const token = localStorage.getItem('token');
-      const headers = {};
-      if (token) headers['Authorization'] = `Bearer ${token}`;
       // Send all deletes in parallel
-      const results = await Promise.all(selectedOrderIds.map(id =>
-        fetch(`/api/orders/${id}`, { method: 'DELETE', headers })
+      await Promise.all(selectedOrderIds.map(id =>
+        apiFetch(`/api/orders/${id}`, { method: 'DELETE' })
       ));
-      // Check for failures
-      const failed = results.filter(res => !res.ok);
-      if (failed.length > 0) {
-        setOrderError('Some orders could not be deleted.');
-        alert('Some orders could not be deleted.');
-      } else {
-        setOrderError(null);
-        setSelectedOrderIds([]);
-        await fetchAdminData();
-        alert('Selected orders deleted successfully!');
-      }
+      // If any promise rejects, it will be caught by the catch block.
+      setOrderError(null);
+      setSelectedOrderIds([]);
+      await fetchAdminData();
+      alert('Selected orders deleted successfully!');
     } catch (e) {
       setOrderError(e.message || 'Failed to delete selected orders');
     }
@@ -307,17 +293,11 @@ function Admin() {
       if (editForm.image && typeof editForm.image !== 'string') {
         formData.append('image', editForm.image);
       }
-      const token = localStorage.getItem('token');
-      const headers = {};
-      if (token) headers['Authorization'] = `Bearer ${token}`;
 
-      const res = await fetch(`/api/products/${editProduct._id}`, {
+      const updatedProduct = await apiFetch(`/api/products/${editProduct._id}`, {
         method: 'PUT',
-        headers,
         body: formData,
       });
-      if (!res.ok) throw new Error('Failed to update product');
-      const updatedProduct = await res.json();
       setProducts(prev => prev.map(p => p._id === updatedProduct._id ? updatedProduct : p));
       window.dispatchEvent(new Event('productsUpdated'));
       setEditProduct(null);
@@ -350,16 +330,11 @@ function Admin() {
       formData.append('category', bestPickForm.category);
       formData.append('description', bestPickForm.description);
       if (bestPickForm.image) formData.append('image', bestPickForm.image);
-      const token = localStorage.getItem('token');
-      const headers = {};
-      if (token) headers['Authorization'] = `Bearer ${token}`;
-      const res = await fetch('/api/best-picks', {
+
+      const newPick = await apiFetch('/api/best-picks', {
         method: 'POST',
-        headers,
         body: formData,
       });
-      if (!res.ok) throw new Error('Failed to add best pick');
-      const newPick = await res.json();
       setBestPicks(prev => [newPick, ...prev]);
       window.dispatchEvent(new Event('bestPicksUpdated'));
       setBestPickForm({ name: '', price: '', category: '', description: '', image: null });
@@ -375,14 +350,9 @@ function Admin() {
     if (!window.confirm('Delete this best pick?')) return;
     setBestPickError('');
     try {
-      const token = localStorage.getItem('token');
-      const headers = {};
-      if (token) headers['Authorization'] = `Bearer ${token}`;
-      const res = await fetch(`/api/best-picks/${id}`, {
+      await apiFetch(`/api/best-picks/${id}`, {
         method: 'DELETE',
-        headers,
       });
-      if (!res.ok) throw new Error('Failed to delete best pick');
       setBestPicks(prev => prev.filter(pick => pick._id !== id));
       window.dispatchEvent(new Event('bestPicksUpdated'));
     } catch (err) {
@@ -393,16 +363,10 @@ function Admin() {
   const handleOrderStatusUpdate = async (orderId, status) => {
     setOrderError(null);
     try {
-      const token = localStorage.getItem('token');
-      const headers = { 'Content-Type': 'application/json' };
-      if (token) headers['Authorization'] = `Bearer ${token}`;
-      const res = await fetch(`/api/orders/${orderId}`, {
+      const updatedOrder = await apiFetch(`/api/orders/${orderId}`, {
         method: 'PATCH',
-        headers,
         body: JSON.stringify({ status }),
       });
-      if (!res.ok) throw new Error('Failed to update order status');
-      const updatedOrder = await res.json();
       setOrders(prev => prev.map(o => o._id === updatedOrder._id ? updatedOrder : o));
     } catch (err) {
       setOrderError(err.message);
@@ -412,17 +376,10 @@ function Admin() {
   const handleToggleStock = async (productId, currentStockStatus) => {
     const newStockStatus = !currentStockStatus;
     try {
-      const token = localStorage.getItem('token');
-      const res = await fetch(`/api/products/${productId}/stock`, {
+      const updatedProduct = await apiFetch(`/api/products/${productId}/stock`, {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
         body: JSON.stringify({ inStock: newStockStatus }),
       });
-      if (!res.ok) throw new Error('Failed to update stock status');
-      const updatedProduct = await res.json();
       setProducts(prev => prev.map(p => p._id === updatedProduct._id ? updatedProduct : p));
       showPopup(`Product stock set to ${newStockStatus ? 'In Stock' : 'Out of Stock'}.`);
     } catch (err) {
@@ -433,19 +390,14 @@ function Admin() {
   const fetchAdminData = async () => {
     setOrderLoading(true);
     try {
-      const token = localStorage.getItem('token');
-      const headers = { 'Authorization': `Bearer ${token}` };
       const [productsRes, bestPicksRes, ordersRes] = await Promise.all([
-        fetch('/api/products', { headers }),
-        fetch('/api/best-picks', { headers }),
-        fetch('/api/orders', { headers }),
+        apiFetch('/api/products'),
+        apiFetch('/api/best-picks'),
+        apiFetch('/api/orders'),
       ]);
-      const productsData = await productsRes.json();
-      const bestPicksData = await bestPicksRes.json();
-      const ordersData = await ordersRes.json();
-      setProducts(Array.isArray(productsData) ? productsData : []);
-      setBestPicks(Array.isArray(bestPicksData) ? bestPicksData : []);
-      setOrders(Array.isArray(ordersData) ? ordersData : []);
+      setProducts(Array.isArray(productsRes) ? productsRes : []);
+      setBestPicks(Array.isArray(bestPicksRes) ? bestPicksRes : []);
+      setOrders(Array.isArray(ordersRes) ? ordersRes : []);
     } catch (err) {
       setProductError('Failed to fetch admin data');
     } finally {
@@ -604,12 +556,11 @@ function Admin() {
                         <button style={{ ...styles.button, padding: '0.4em 0.8em', fontSize: '0.9rem' }} onClick={() => handleProductEdit(product)}>Edit</button>
                         <button style={{ ...styles.button, background: '#c00', color: '#fff', padding: '0.4em 0.8em', fontSize: '0.9rem' }} onClick={async () => {
                           if (!window.confirm('Delete this product?')) return;
-                          const token = localStorage.getItem('token');
-                          const res = await fetch(`/api/products/${product._id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
-                          if (res.ok) {
+                          try {
+                            await apiFetch(`/api/products/${product._id}`, { method: 'DELETE' });
                             setProducts(prev => prev.filter(p => p._id !== product._id));
                             showPopup('Product deleted successfully.');
-                          } else {
+                          } catch (err) {
                             showPopup('Failed to delete product.', 'error');
                           }
                         }}>Delete</button>
@@ -751,23 +702,9 @@ function Admin() {
                               onClick={async () => {
                                 if (!window.confirm('Are you sure you want to delete this order? This cannot be undone.')) return;
                                 try {
-                                  const token = localStorage.getItem('token');
-                                  const headers = {};
-                                  if (token) headers['Authorization'] = `Bearer ${token}`;
-                                  const res = await fetch(`/api/orders/${order._id}`, {
+                                  await apiFetch(`/api/orders/${order._id}`, {
                                     method: 'DELETE',
-                                    headers,
                                   });
-                                  if (!res.ok) {
-                                    let errorMsg = 'Failed to delete order';
-                                    try {
-                                      const errJson = await res.json();
-                                      errorMsg = errJson.message || errorMsg;
-                                      // Log error details for debugging
-                                      console.error('Order delete error:', errJson);
-                                    } catch {}
-                                    throw new Error(errorMsg);
-                                  }
                                   setOrders(prev => prev.filter(o => o._id !== order._id));
                                   setTimeout(() => { fetchAdminData(); }, 300);
                                   alert('Order deleted successfully!');

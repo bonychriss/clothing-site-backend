@@ -1,6 +1,7 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { fetchFromApi as apiFetch } from '../utils/api';
 import CartSidebar from '../components/CartSidebar';
 
 // Skeleton loader and error fallback for images
@@ -158,12 +159,10 @@ function Products() {
   useEffect(() => {
     const fetchAllProducts = async () => {
       try {
-        const [productsRes, bestPicksRes] = await Promise.all([
-          fetch('/api/products'),
-          fetch('/api/best-picks')
+        const [productsData, bestPicksData] = await Promise.all([
+          apiFetch('/api/products').catch(() => []), // Use apiFetch and fallback to empty array on error
+          apiFetch('/api/best-picks').catch(() => [])
         ]);
-        const productsData = productsRes.ok ? await productsRes.json() : [];
-        const bestPicksData = bestPicksRes.ok ? await bestPicksRes.json() : [];
         // Mark best picks so we can identify them later
         const markedBestPicks = (Array.isArray(bestPicksData) ? bestPicksData : []).map(p => ({ ...p, isBestPick: true }));
 
@@ -260,7 +259,7 @@ function Products() {
   const visible = useMemo(() => {
     const filtered = applyFilters(products);
     return applySort(filtered);
-  }, [products, ratings, selectedCats, priceMin, priceMax, ratingMin, sortKey, applyFilters, applySort]);
+  }, [products, applyFilters, applySort]);
 
   // Styles
   const pageStyle = { maxWidth: 'none', width: '100%', margin: '0', padding: '0 2rem 2rem 0', boxSizing: 'border-box', display: 'block' };

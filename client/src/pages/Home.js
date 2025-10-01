@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 
+import { fetchFromApi as apiFetch } from '../utils/api';
 export default function Home() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
@@ -17,7 +18,6 @@ export default function Home() {
   const [testimonialIdx, setTestimonialIdx] = useState(0);
 
   // Simple utility helpers
-  const API_BASE = process.env.REACT_APP_API_BASE_URL || '';
   const fmt = (s) => String(s || '').trim();
   const preloadImage = (src) => {
     if (!src) return;
@@ -92,13 +92,8 @@ export default function Home() {
     setBpLoading(true);
     setBpError(null);
     try {
-      const res = await fetch(`${API_BASE}/api/best-picks`, {credentials: 'include'});
-      if (!res.ok) {
-        // If the response is not ok, try to read the error message from the response body
-        const errorData = await res.json().catch(() => ({message: `Failed to fetch Best Picks: ${res.status}`})); // Attempt to parse JSON, if fails, create a default error object
-        throw new Error(errorData?.message || `Failed to fetch Best Picks: ${res.status}`);
-      }
-      const data = await res.json(); // Directly parse the JSON from the response
+      // The new apiFetch handles URL, auth, JSON parsing, and error throwing.
+      const data = await apiFetch('/api/best-picks');
       setBestPicks(Array.isArray(data) ? data : []); // Set the best picks
     } catch (err) {
       setBpError(err?.message || 'Failed to fetch Best Picks');
@@ -106,7 +101,7 @@ export default function Home() {
     } finally {
       setBpLoading(false);
     }
-  }, [API_BASE]);
+  }, []);
   useEffect(() => {
     fetchBestPicks();
     const handler = () => fetchBestPicks();
