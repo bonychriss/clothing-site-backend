@@ -13,7 +13,7 @@ const app = express();
 
 // Use CORS middleware for deployment
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'https://sabor-espanol-vrwk.onrender.com',
+  origin: 'https://sabor-espanol-vrwk.onrender.com', // allow deployed frontend
   credentials: true
 }));
 app.use(express.json({ limit: '10mb' }));
