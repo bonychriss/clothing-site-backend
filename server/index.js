@@ -10,18 +10,12 @@ dotenv.config();
 
 const app = express();
 
-const allowedOrigin = 'https://sabor-espanol-vrwk.onrender.com';
-app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', allowedOrigin);
-  res.header('Access-Control-Allow-Credentials', 'true');
-  res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type,Authorization');
-  res.header('Vary', 'Origin');
-  if (req.method === 'OPTIONS') {
-    return res.sendStatus(204);
-  }
-  next();
-});
+
+// Use CORS middleware for deployment
+app.use(cors({
+  origin: process.env.FRONTEND_URL || 'https://sabor-espanol-vrwk.onrender.com',
+  credentials: true
+}));
 app.use(express.json({ limit: '10mb' }));
 
 // Connect to MongoDB
@@ -84,8 +78,19 @@ app.use('/api/orders', require('./routes/orders'));
 app.use('/api/featured-images', require('./routes/featuredImages'));
 app.use('/api/best-picks', require('./routes/bestPicks'));
 
+
 const path = require('path');
+
+// Serve static React files
+app.use(express.static(path.join(__dirname, '../client/build')));
+
+// Serve images from React public folder
 app.use('/images', express.static(path.join(__dirname, '../client/public/images')));
+
+// Catch-all route to serve React index.html for frontend routes
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../client/build', 'index.html'));
+});
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
