@@ -9,7 +9,17 @@ export async function fetchFromApi(endpoint, options = {}) {
     ...options,
   });
   if (!res.ok) {
-    throw new Error(`API error: ${res.status}`);
+    // Try to parse the error response from the server
+    try {
+      const errorData = await res.json();
+      // Create a new error object with the server's message
+      const error = new Error(errorData.message || `API error: ${res.status}`);
+      error.data = errorData; // Attach full error data
+      throw error;
+    } catch (e) {
+      // If parsing fails, throw a generic error
+      throw new Error(`API error: ${res.status}`);
+    }
   }
   return res.json();
 }

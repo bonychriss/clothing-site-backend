@@ -113,7 +113,7 @@ function Profile() {
       setPasswordMsg('Password changed successfully.');
       setPasswordForm({ oldPassword: '', newPassword: '' });
     } catch (err) {
-      setPasswordMsg(data.message || 'Failed to change password.');
+      setPasswordMsg(err.message || 'Failed to change password.');
     }
   };
 
