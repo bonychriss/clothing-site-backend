@@ -10,14 +10,18 @@ dotenv.config();
 
 const app = express();
 
-app.use(cors({
-  origin: 'https://sabor-espanol-vrwk.onrender.com',
-  credentials: true
-}));
-app.options('*', cors({
-  origin: 'https://sabor-espanol-vrwk.onrender.com',
-  credentials: true
-}));
+const allowedOrigin = 'https://sabor-espanol-vrwk.onrender.com';
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', allowedOrigin);
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type,Authorization');
+  res.header('Vary', 'Origin');
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(204);
+  }
+  next();
+});
 app.use(express.json({ limit: '10mb' }));
 
 // Connect to MongoDB
