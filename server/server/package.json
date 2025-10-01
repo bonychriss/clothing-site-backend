@@ -1,7 +1,0 @@
-{
-  "dependencies": {
-    "express-validator": "^7.2.1",
-    "multer": "^2.0.2",
-    "sharp": "^0.34.4"
-  }
-}

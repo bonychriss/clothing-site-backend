@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';import { apiFetch } from '../utils/api';
 
 export default function Checkout() {
   // ...existing code...
@@ -87,6 +87,7 @@ export default function Checkout() {
         throw new Error('You must be logged in to place an order.');
       }
       const response = await fetch('/api/orders', {
+      const result = await apiFetch('/api/orders', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
