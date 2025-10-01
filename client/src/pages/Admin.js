@@ -433,10 +433,10 @@ function Admin() {
 
   return (
     <div className={`admin-page ${theme}`}>
-      <button className="hamburger" onClick={() => setSidebarOpen(!sidebarOpen)}>
-        <FaTachometerAlt />
-      </button>
       <aside className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
+        <button className="hamburger" onClick={() => setSidebarOpen(!sidebarOpen)}>
+          <FaTachometerAlt />
+        </button>
         <div className="sidebar-header">
           <FaUserCircle size={32} />
           <span className="sidebar-username">Admin</span>
